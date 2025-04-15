@@ -1,0 +1,82 @@
+2025-04-15 06:55:36 [main] INFO  com.dbviewer.DbViewerApplication - Starting DbViewerApplication v0.0.1-SNAPSHOT using Java 21.0.6 on bhagidaran-0369 with PID 38129 (/Users/bhagidaran-0369/Desktop/Trae/Dbconnector/target/dbconnector-0.0.1-SNAPSHOT.jar started by bhagidaran-0369 in /Users/bhagidaran-0369/Desktop/Trae/Dbconnector)
+2025-04-15 06:55:36 [main] INFO  com.dbviewer.DbViewerApplication - No active profile set, falling back to 1 default profile: "default"
+2025-04-15 06:55:37 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port(s): 8081 (http)
+2025-04-15 06:55:37 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8081"]
+2025-04-15 06:55:37 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-04-15 06:55:37 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/9.0.68]
+2025-04-15 06:55:37 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-04-15 06:55:37 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 562 ms
+2025-04-15 06:55:37 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page template: index
+2025-04-15 06:55:37 [main] WARN  o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'dataSource' defined in class path resource [org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Hikari.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [com.zaxxer.hikari.HikariDataSource]: Factory method 'dataSource' threw exception; nested exception is org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$DataSourceBeanCreationException: Failed to determine a suitable driver class
+2025-04-15 06:55:37 [main] INFO  o.a.catalina.core.StandardService - Stopping service [Tomcat]
+2025-04-15 06:55:37 [main] INFO  o.s.b.a.l.ConditionEvaluationReportLoggingListener - 
+
+Error starting ApplicationContext. To display the conditions report re-run your application with 'debug' enabled.
+2025-04-15 06:55:37 [main] ERROR o.s.b.d.LoggingFailureAnalysisReporter - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Failed to configure a DataSource: 'url' attribute is not specified and no embedded datasource could be configured.
+
+Reason: Failed to determine a suitable driver class
+
+
+Action:
+
+Consider the following:
+	If you want an embedded database (H2, HSQL or Derby), please put it on the classpath.
+	If you have database settings to be loaded from a particular profile you may need to activate it (no profiles are currently active).
+
+2025-04-15 07:15:10 [main] INFO  com.dbviewer.DbViewerApplication - Starting DbViewerApplication v0.0.1-SNAPSHOT using Java 21.0.6 on bhagidaran-0369 with PID 44500 (/Users/bhagidaran-0369/Desktop/Trae/Dbconnector/target/dbconnector-0.0.1-SNAPSHOT.jar started by bhagidaran-0369 in /Users/bhagidaran-0369/Desktop/Trae/Dbconnector)
+2025-04-15 07:15:10 [main] INFO  com.dbviewer.DbViewerApplication - No active profile set, falling back to 1 default profile: "default"
+2025-04-15 07:15:11 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port(s): 8081 (http)
+2025-04-15 07:15:11 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8081"]
+2025-04-15 07:15:11 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-04-15 07:15:11 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/9.0.68]
+2025-04-15 07:15:11 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-04-15 07:15:11 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 619 ms
+2025-04-15 07:15:11 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page template: index
+2025-04-15 07:15:11 [main] WARN  o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'dataSource' defined in class path resource [org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Hikari.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [com.zaxxer.hikari.HikariDataSource]: Factory method 'dataSource' threw exception; nested exception is org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$DataSourceBeanCreationException: Failed to determine a suitable driver class
+2025-04-15 07:15:11 [main] INFO  o.a.catalina.core.StandardService - Stopping service [Tomcat]
+2025-04-15 07:15:11 [main] INFO  o.s.b.a.l.ConditionEvaluationReportLoggingListener - 
+
+Error starting ApplicationContext. To display the conditions report re-run your application with 'debug' enabled.
+2025-04-15 07:15:11 [main] ERROR o.s.b.d.LoggingFailureAnalysisReporter - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Failed to configure a DataSource: 'url' attribute is not specified and no embedded datasource could be configured.
+
+Reason: Failed to determine a suitable driver class
+
+
+Action:
+
+Consider the following:
+	If you want an embedded database (H2, HSQL or Derby), please put it on the classpath.
+	If you have database settings to be loaded from a particular profile you may need to activate it (no profiles are currently active).
+
+2025-04-15 09:43:48 [main] INFO  c.dbconnector.DbConnectorApplication - Starting DbConnectorApplication v0.0.1-SNAPSHOT using Java 21.0.6 on bhagidaran-0369 with PID 53787 (/Users/bhagidaran-0369/Desktop/Trae/Dbconnector/target/dbconnector-0.0.1-SNAPSHOT.jar started by bhagidaran-0369 in /Users/bhagidaran-0369/Desktop/Trae/Dbconnector)
+2025-04-15 09:43:48 [main] DEBUG c.dbconnector.DbConnectorApplication - Running with Spring Boot v2.7.5, Spring v5.3.23
+2025-04-15 09:43:48 [main] INFO  c.dbconnector.DbConnectorApplication - No active profile set, falling back to 1 default profile: "default"
+2025-04-15 09:43:49 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port(s): 8081 (http)
+2025-04-15 09:43:49 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8081"]
+2025-04-15 09:43:49 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-04-15 09:43:49 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/9.0.68]
+2025-04-15 09:43:49 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-04-15 09:43:49 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 603 ms
+2025-04-15 09:43:49 [main] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page template: index
+2025-04-15 09:43:49 [main] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8081"]
+2025-04-15 09:43:49 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port(s): 8081 (http) with context path ''
+2025-04-15 09:43:49 [main] INFO  c.dbconnector.DbConnectorApplication - Started DbConnectorApplication in 1.322 seconds (JVM running for 1.646)
+2025-04-15 09:43:55 [http-nio-8081-exec-1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-04-15 09:43:55 [http-nio-8081-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-04-15 09:43:55 [http-nio-8081-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 0 ms
