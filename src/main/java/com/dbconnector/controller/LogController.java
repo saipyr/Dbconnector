@@ -1,6 +1,11 @@
 package com.dbconnector.controller;
 
 import com.dbconnector.service.LogService;
+// Add spring-boot-starter-web dependency to your pom.xml:
+// <dependency>
+//     <groupId>org.springframework.boot</groupId>
+//     <artifactId>spring-boot-starter-web</artifactId>
+// </dependency>
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

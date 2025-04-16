@@ -1,261 +1,350 @@
+// Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize logger first
+    // Initialize modules in the correct order
     const logger = LoggerModule.init();
-    logger.common('Application starting up');
     
-    // Initialize modules
-    const editor = EditorModule.init(logger);
-    const ui = UIModule.init(logger);
-    const connection = ConnectionModule.init(ui.showStatus, logger);
-    const tables = TablesModule.init(connection, editor, ui.showStatus, logger);
-    const query = QueryModule.init(editor, ui.showStatus, tables.displayResults, logger);
-    const savedConnections = SavedConnectionsModule.init(connection, ui.showStatus, logger);
-    const dbDrivers = DbDriversModule.init(ui.showStatus, logger);
+    // Initialize toast manager
+    const toastManager = ToastModule.init();
     
-    logger.common('All modules initialized');
+    // Initialize connection manager with dependencies
+    const connectionManager = ConnectionManager.init({
+        logger: logger,
+        toastManager: toastManager
+    });
     
-    // Set up event listeners
-    setupEventListeners(connection, tables, query, savedConnections, dbDrivers, editor, logger);
+    // Initialize database drivers module with dependencies
+    const dbDriversModule = DbDriversModule.init({
+        logger: logger,
+        toastManager: toastManager
+    });
     
-    // Initialize UI components
-    ui.initializeToast();
+    // Initialize query module with dependencies
+    const queryModule = QueryModule.init({
+        logger: logger,
+        toastManager: toastManager,
+        connectionManager: connectionManager
+    });
     
-    // Display saved connections on load
-    savedConnections.displaySavedConnections();
+    // Add direct event listeners for critical buttons
+    setupDirectEventListeners(logger, toastManager, connectionManager);
     
-    logger.access('Application UI ready');
+    // Log application start
+    logger.info('DB Connector application initialized');
     
-    function setupEventListeners(connection, tables, query, savedConnections, dbDrivers, editor, logger) {
-        logger.common('Setting up event listeners');
-        
-        // Form submission
-        document.getElementById('connectionForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            logger.stdin('Connection form submitted', { preventDefault: true });
-        });
-        
-        // Connection controls
-        document.getElementById('startConnection').addEventListener('click', function() {
-            logger.stdin('Connect button clicked');
-            connection.startConnection();
-        });
-        
-        // Save connection button
-        document.getElementById('saveConnectionBtn').addEventListener('click', function() {
-            logger.stdin('Save button clicked');
-            connection.saveCurrentConnection();
-        });
-        
-        document.getElementById('stopConnection').addEventListener('click', function() {
-            logger.stdin('Stop connection button clicked');
-            connection.stopConnection();
-        });
-        
-        // Custom database driver
-        document.getElementById('saveCustomDbDriver').addEventListener('click', function() {
-            logger.stdin('Save custom database driver button clicked');
+    // Check if Bootstrap is loaded
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap is not loaded. Some UI components may not work correctly.');
+    }
+});
+
+// Setup direct event listeners for critical functionality
+function setupDirectEventListeners(logger, toastManager, connectionManager) {
+    // Connect button
+    const connectBtn = document.getElementById('startConnection');
+    if (connectBtn) {
+        connectBtn.addEventListener('click', function() {
+            logger.info('Connect button clicked - Starting connection process');
+            toastManager.showToast('Attempting to connect...', 'info');
             
-            const driverData = {
-                name: document.getElementById('customDbName').value,
-                className: document.getElementById('customDbClassName').value,
-                urlTemplate: document.getElementById('customDbUrlTemplate').value,
-                defaultPort: document.getElementById('customDbDefaultPort').value
-            };
+            logger.info('Collecting connection form data');
+            const connectionData = getConnectionFormData();
+            logger.info(`Connection data collected: ${JSON.stringify(connectionData)}`);
             
-            const driverFile = document.getElementById('customDbDriver').files[0];
+            // Update UI to show progress
+            connectBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Connecting...';
+            connectBtn.disabled = true;
             
-            if (!driverData.name || !driverData.className || !driverData.urlTemplate || !driverData.defaultPort || !driverFile) {
-                ui.showStatus('Please fill in all fields', 'warning');
-                logger.error('Custom driver form validation failed', driverData);
+            logger.info('Sending connection request to server');
+            // Make direct API call to connect
+            fetch('/api/connections/connect', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(connectionData)
+            })
+            .then(response => {
+                logger.info(`Server responded with status: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                logger.info('Parsing JSON response');
+                return response.json();
+            })
+            .then(data => {
+                logger.info(`Response data received: ${JSON.stringify(data)}`);
+                if (data.success) {
+                    logger.info('Connection successful');
+                    toastManager.showToast(`Connected successfully to ${connectionData.dbType} at ${connectionData.host}!`, 'success');
+                    
+                    logger.info('Switching to tables tab');
+                    // Switch to tables tab if it exists
+                    const tablesTab = document.getElementById('tables-tab');
+                    if (tablesTab) {
+                        logger.info('Tables tab found, activating');
+                        bootstrap.Tab.getOrCreateInstance(tablesTab).show();
+                    } else {
+                        logger.warn('Tables tab not found');
+                    }
+                } else {
+                    logger.error(`Connection failed: ${data.message}`);
+                    throw new Error(data.message || 'Failed to connect');
+                }
+            })
+            .catch(error => {
+                logger.error('Connection error: ' + error.message);
+                toastManager.showToast(`Error: ${error.message}`, 'danger');
+            })
+            .finally(() => {
+                logger.info('Connection process completed');
+                // Reset button
+                connectBtn.innerHTML = 'Connect';
+                connectBtn.disabled = false;
+            });
+        });
+    } else {
+        logger.error('Connect button not found in DOM');
+    }
+    
+    // Save connection button
+    const saveBtn = document.getElementById('saveConnectionBtn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+            logger.info('Save button clicked - Opening save connection modal');
+            
+            // Validate form data before showing modal
+            logger.info('Validating connection form data');
+            const connectionData = getConnectionFormData();
+            
+            if (!connectionData.dbType || !connectionData.host) {
+                logger.warn('Incomplete connection data, showing warning');
+                toastManager.showToast('Please fill in required connection details first', 'warning');
                 return;
             }
             
-            logger.audit('Adding custom database driver', driverData);
+            logger.info('Connection data valid, preparing to show modal');
             
-            dbDrivers.addCustomDriver(driverData, driverFile)
-                .then(driver => {
-                    ui.showStatus(`Database driver "${driver.name}" added successfully`, 'success');
-                    logger.audit('Custom database driver added successfully', { id: driver.id, name: driver.name });
-                    
-                    // Close modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('customDbDriverModal'));
-                    modal.hide();
-                    
-                    // Clear form
-                    document.getElementById('customDbDriverForm').reset();
-                })
-                .catch(error => {
-                    ui.showStatus(`Failed to add database driver: ${error.message}`, 'danger');
-                    logger.error('Error adding custom database driver', { error: error.toString() });
-                });
-        });
-        
-        // Query execution
-        document.getElementById('executeQuery').addEventListener('click', function() {
-            logger.stdin('Execute query button clicked');
-            query.executeQuery();
-        });
-        
-        // Export query results
-        document.getElementById('exportExcel').addEventListener('click', function() {
-            logger.stdin('Export query to Excel button clicked');
-            query.exportResults('excel');
-        });
-        
-        document.getElementById('exportPdf').addEventListener('click', function() {
-            logger.stdin('Export query to PDF button clicked');
-            query.exportResults('pdf');
-        });
-        
-        // Export table results
-        document.getElementById('exportTableExcel').addEventListener('click', function() {
-            logger.stdin('Export table to Excel button clicked');
-            tables.exportTable('excel');
-        });
-        
-        document.getElementById('exportTablePdf').addEventListener('click', function() {
-            logger.stdin('Export table to PDF button clicked');
-            tables.exportTable('pdf');
-        });
-        
-        // Custom database driver
-        document.getElementById('saveCustomDbDriver').addEventListener('click', function() {
-            logger.stdin('Save custom database driver button clicked');
-            saveCustomDatabaseDriver();
-        });
-        
-        // Pagination
-        document.getElementById('prevPage').addEventListener('click', function() {
-            logger.stdin('Previous page button clicked');
-            query.navigatePage(-1);
-        });
-        
-        document.getElementById('nextPage').addEventListener('click', function() {
-            logger.stdin('Next page button clicked');
-            query.navigatePage(1);
-        });
-        
-        // These event listeners might be for a modal that doesn't exist yet
-        if (document.getElementById('saveConnection')) {
-            document.getElementById('saveConnection').addEventListener('click', function() {
-                logger.stdin('Save connection button clicked');
-                savedConnections.openSaveConnectionModal();
-            });
-        }
-        
-        if (document.getElementById('confirmSaveConnection')) {
-            document.getElementById('confirmSaveConnection').addEventListener('click', function() {
-                logger.stdin('Confirm save connection button clicked');
-                savedConnections.saveConnection();
-            });
-        }
-        
-        // Refresh buttons
-        document.getElementById('refreshTables').addEventListener('click', function() {
-            logger.stdin('Refresh tables button clicked');
-            tables.loadTables();
-        });
-        
-        document.getElementById('refreshConnections').addEventListener('click', function() {
-            logger.stdin('Refresh connections button clicked');
-            savedConnections.displaySavedConnections();
-        });
-        
-        // Search filters
-        document.getElementById('tableSearch').addEventListener('input', function() {
-            logger.stdin('Table search input', { value: this.value });
-            tables.filterTables();
-        });
-        
-        document.getElementById('connectionSearch').addEventListener('input', function() {
-            logger.stdin('Connection search input', { value: this.value });
-            savedConnections.filterConnections();
-        });
-        
-        // Database type change
-        document.getElementById('dbType').addEventListener('change', function() {
-            logger.stdin('Database type changed', { value: this.value });
-            connection.updatePortForDbType();
-        });
-        
-        logger.common('Event listeners setup complete');
-    }
-    
-    // Function to save custom database driver
-    function saveCustomDatabaseDriver() {
-        const dbName = document.getElementById('customDbName').value;
-        const driverFile = document.getElementById('customDbDriver').files[0];
-        const className = document.getElementById('customDbClassName').value;
-        const urlTemplate = document.getElementById('customDbUrlTemplate').value;
-        const defaultPort = document.getElementById('customDbDefaultPort').value;
-        
-        if (!dbName || !driverFile || !className || !urlTemplate || !defaultPort) {
-            ui.showStatus('Please fill in all fields', 'warning');
-            return;
-        }
-        
-        // Create FormData to send the file
-        const formData = new FormData();
-        formData.append('name', dbName);
-        formData.append('driverFile', driverFile);
-        formData.append('className', className);
-        formData.append('urlTemplate', urlTemplate);
-        formData.append('defaultPort', defaultPort);
-        
-        // Send to backend
-        fetch('/api/drivers', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                ui.showStatus('Database driver added successfully', 'success');
+            // Show the modal
+            const saveModal = new bootstrap.Modal(document.getElementById('saveConnectionModal'));
+            if (saveModal) {
+                logger.info('Save connection modal found, showing');
+                saveModal.show();
+                logger.info('Modal displayed');
                 
-                // Add to dropdown
-                const option = document.createElement('option');
-                option.value = data.id || dbName.toLowerCase();
-                option.textContent = dbName;
-                document.getElementById('dbType').appendChild(option);
-                
-                // Close modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('customDbDriverModal'));
-                modal.hide();
-                
-                // Clear form
-                document.getElementById('customDbName').value = '';
-                document.getElementById('customDbDriver').value = '';
-                document.getElementById('customDbClassName').value = '';
-                document.getElementById('customDbUrlTemplate').value = '';
-                document.getElementById('customDbDefaultPort').value = '';
+                // Pre-fill connection name if empty
+                const nameField = document.getElementById('modalConnectionName');
+                if (nameField && !nameField.value) {
+                    const suggestedName = `${connectionData.dbType} - ${connectionData.host}`;
+                    logger.info(`Pre-filling connection name: ${suggestedName}`);
+                    nameField.value = suggestedName;
+                }
             } else {
-                ui.showStatus(data.message || 'Failed to add database driver', 'danger');
+                logger.error('Save connection modal not found or Bootstrap not loaded');
+                toastManager.showToast('Could not open save dialog', 'danger');
             }
-        })
-        .catch(error => {
-            logger.connection('Error adding database driver', { error: error.toString() });
-            ui.showStatus('Error adding database driver', 'danger');
         });
+    } else {
+        logger.error('Save button not found in DOM');
     }
     
-    // Function to load custom database drivers
-    function loadCustomDatabaseDrivers() {
-        fetch('/api/drivers')
-        .then(response => response.json())
-        .then(data => {
-            if (data && data.drivers && data.drivers.length > 0) {
-                const dbTypeSelect = document.getElementById('dbType');
-                
-                data.drivers.forEach(driver => {
-                    const option = document.createElement('option');
-                    option.value = driver.id;
-                    option.textContent = driver.name;
-                    dbTypeSelect.appendChild(option);
-                });
-            }
-        })
-        .catch(error => {
-            logger.connection('Error loading custom database drivers', { error: error.toString() });
+    // Confirm save in modal
+    const confirmSaveBtn = document.getElementById('confirmSaveConnection');
+    if (confirmSaveBtn) {
+        confirmSaveBtn.addEventListener('click', function() {
+            logger.info('Confirm save button clicked - Starting save process');
+            
+            logger.info('Collecting connection form data');
+            const connectionData = getConnectionFormData();
+            
+            logger.info('Getting connection name and folder from modal');
+            connectionData.name = document.getElementById('modalConnectionName').value.trim();
+            connectionData.folder = document.getElementById('modalSaveFolder').value.trim() || 'default';
+            
+            logger.info(`Saving connection "${connectionData.name}" to folder "${connectionData.folder}"`);
+            
+            // Update UI to show progress
+            confirmSaveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+            confirmSaveBtn.disabled = true;
+            
+            logger.info('Sending save request to server');
+            // Make direct API call to save
+            fetch('/api/connections/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(connectionData)
+            })
+            .then(response => {
+                logger.info(`Server responded with status: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                logger.info('Parsing JSON response');
+                return response.json();
+            })
+            .then(data => {
+                logger.info(`Response data received: ${JSON.stringify(data)}`);
+                if (data.success) {
+                    logger.info('Connection saved successfully');
+                    toastManager.showToast(`Connection "${connectionData.name}" saved successfully!`, 'success');
+                    
+                    logger.info('Closing modal');
+                    // Close the modal
+                    const saveModal = bootstrap.Modal.getInstance(document.getElementById('saveConnectionModal'));
+                    if (saveModal) {
+                        saveModal.hide();
+                        logger.info('Modal closed');
+                    } else {
+                        logger.warn('Could not find modal instance to close');
+                    }
+                    
+                    logger.info('Refreshing saved connections list');
+                    // Refresh connections list if the function exists
+                    if (typeof connectionManager.refreshConnectionsList === 'function') {
+                        connectionManager.refreshConnectionsList();
+                        logger.info('Connections list refreshed');
+                    } else {
+                        logger.warn('refreshConnectionsList function not found');
+                    }
+                } else {
+                    logger.error(`Save failed: ${data.message}`);
+                    throw new Error(data.message || 'Failed to save connection');
+                }
+            })
+            .catch(error => {
+                logger.error('Save error: ' + error.message);
+                toastManager.showToast(`Error: ${error.message}`, 'danger');
+            })
+            .finally(() => {
+                logger.info('Save process completed');
+                // Reset button
+                confirmSaveBtn.innerHTML = 'Save';
+                confirmSaveBtn.disabled = false;
+            });
         });
+    } else {
+        logger.error('Confirm save button not found in DOM');
     }
-});
+    
+    // Add custom driver button
+    const addDriverBtn = document.getElementById('addCustomDriver');
+    if (addDriverBtn) {
+        addDriverBtn.addEventListener('click', function() {
+            logger.info('Add custom driver button clicked - Opening driver modal');
+            
+            // Show the modal
+            const driverModal = new bootstrap.Modal(document.getElementById('customDbDriverModal'));
+            if (driverModal) {
+                logger.info('Custom driver modal found, showing');
+                driverModal.show();
+                logger.info('Driver modal displayed');
+            } else {
+                logger.error('Custom driver modal not found or Bootstrap not loaded');
+                toastManager.showToast('Could not open driver dialog', 'danger');
+            }
+        });
+    } else {
+        logger.error('Add custom driver button not found in DOM');
+    }
+    
+    // Save custom driver button
+    const saveDriverBtn = document.getElementById('saveCustomDbDriver');
+    if (saveDriverBtn) {
+        saveDriverBtn.addEventListener('click', function() {
+            logger.info('Save custom driver button clicked - Starting driver upload process');
+            
+            // Get form data
+            logger.info('Collecting driver form data');
+            const driverName = document.getElementById('customDbName').value.trim();
+            const driverClassName = document.getElementById('customDbClassName').value.trim();
+            const urlTemplate = document.getElementById('customDbUrlTemplate').value.trim();
+            const defaultPort = document.getElementById('customDbDefaultPort').value.trim();
+            const driverFile = document.getElementById('customDbDriver').files[0];
+            
+            logger.info(`Driver details: ${driverName}, ${driverClassName}, port ${defaultPort}`);
+            
+            if (!driverName || !driverClassName || !urlTemplate || !defaultPort || !driverFile) {
+                logger.warn('Incomplete driver data, showing warning');
+                toastManager.showToast('Please fill in all required fields', 'warning');
+                return;
+            }
+            
+            // Update UI to show progress
+            saveDriverBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
+            saveDriverBtn.disabled = true;
+            
+            // Create FormData object
+            logger.info('Creating FormData for file upload');
+            const formData = new FormData();
+            formData.append('name', driverName);
+            formData.append('className', driverClassName);
+            formData.append('urlTemplate', urlTemplate);
+            formData.append('defaultPort', defaultPort);
+            formData.append('driverFile', driverFile);
+            
+            logger.info('Sending driver upload request to server');
+            // Make API call to upload driver
+            fetch('/api/drivers', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                logger.info(`Server responded with status: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                logger.info('Parsing JSON response');
+                return response.json();
+            })
+            .then(data => {
+                logger.info(`Response data received: ${JSON.stringify(data)}`);
+                if (data.success) {
+                    logger.info('Driver uploaded successfully');
+                    toastManager.showToast(`Driver "${driverName}" uploaded successfully!`, 'success');
+                    
+                    logger.info('Closing modal');
+                    // Close the modal
+                    const driverModal = bootstrap.Modal.getInstance(document.getElementById('customDbDriverModal'));
+                    if (driverModal) {
+                        driverModal.hide();
+                        logger.info('Modal closed');
+                    } else {
+                        logger.warn('Could not find modal instance to close');
+                    }
+                    
+                    // Reset form
+                    logger.info('Resetting driver form');
+                    document.getElementById('customDbDriverForm').reset();
+                } else {
+                    logger.error(`Upload failed: ${data.message}`);
+                    throw new Error(data.message || 'Failed to upload driver');
+                }
+            })
+            .catch(error => {
+                logger.error('Driver upload error: ' + error.message);
+                toastManager.showToast(`Error: ${error.message}`, 'danger');
+            })
+            .finally(() => {
+                logger.info('Driver upload process completed');
+                // Reset button
+                saveDriverBtn.innerHTML = 'Add Driver';
+                saveDriverBtn.disabled = false;
+            });
+        });
+    } else {
+        logger.error('Save custom driver button not found in DOM');
+    }
+}
+
+// Helper function to get connection form data
+function getConnectionFormData() {
+    return {
+        dbType: document.getElementById('dbType').value,
+        host: document.getElementById('host').value,
+        port: document.getElementById('port').value,
+        database: document.getElementById('database').value,
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value
+    };
+}

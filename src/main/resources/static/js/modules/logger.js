@@ -175,8 +175,11 @@ const LoggerModule = (function() {
  * Enhanced Logger Module
  * Provides comprehensive logging functionality with different log levels and categories
  */
+/**
+ * Logger Module
+ * Provides logging functionality for the application
+ */
 const LoggerModule = (function() {
-    // Log levels
     const LOG_LEVELS = {
         DEBUG: 0,
         INFO: 1,
@@ -184,8 +187,129 @@ const LoggerModule = (function() {
         ERROR: 3
     };
     
-    // Current log level
     let currentLogLevel = LOG_LEVELS.INFO;
+    let logHistory = [];
+    
+    /**
+     * Initialize the logger module
+     * @param {Object} options - Logger options
+     * @returns {Object} Logger interface
+     */
+    function init(options = {}) {
+        if (options.logLevel && LOG_LEVELS[options.logLevel] !== undefined) {
+            currentLogLevel = LOG_LEVELS[options.logLevel];
+        }
+        
+        console.log('Logger initialized with log level: ' + getLogLevelName(currentLogLevel));
+        
+        return {
+            debug,
+            info,
+            warn,
+            error,
+            getLogHistory,
+            setLogLevel
+        };
+    }
+    
+    /**
+     * Log a debug message
+     * @param {string} message - Message to log
+     */
+    function debug(message) {
+        if (currentLogLevel <= LOG_LEVELS.DEBUG) {
+            console.debug(message);
+            addToHistory('DEBUG', message);
+        }
+    }
+    
+    /**
+     * Log an info message
+     * @param {string} message - Message to log
+     */
+    function info(message) {
+        if (currentLogLevel <= LOG_LEVELS.INFO) {
+            console.info(message);
+            addToHistory('INFO', message);
+        }
+    }
+    
+    /**
+     * Log a warning message
+     * @param {string} message - Message to log
+     */
+    function warn(message) {
+        if (currentLogLevel <= LOG_LEVELS.WARN) {
+            console.warn(message);
+            addToHistory('WARN', message);
+        }
+    }
+    
+    /**
+     * Log an error message
+     * @param {string} message - Message to log
+     */
+    function error(message) {
+        if (currentLogLevel <= LOG_LEVELS.ERROR) {
+            console.error(message);
+            addToHistory('ERROR', message);
+        }
+    }
+    
+    /**
+     * Add a log entry to history
+     * @param {string} level - Log level
+     * @param {string} message - Log message
+     */
+    function addToHistory(level, message) {
+        const timestamp = new Date().toISOString();
+        logHistory.push({ timestamp, level, message });
+        
+        // Keep history size manageable
+        if (logHistory.length > 1000) {
+            logHistory.shift();
+        }
+    }
+    
+    /**
+     * Get log history
+     * @returns {Array} Log history
+     */
+    function getLogHistory() {
+        return [...logHistory];
+    }
+    
+    /**
+     * Set log level
+     * @param {string} level - Log level name
+     */
+    function setLogLevel(level) {
+        if (LOG_LEVELS[level] !== undefined) {
+            currentLogLevel = LOG_LEVELS[level];
+            console.log('Log level set to: ' + level);
+        } else {
+            console.error('Invalid log level: ' + level);
+        }
+    }
+    
+    /**
+     * Get log level name
+     * @param {number} level - Log level value
+     * @returns {string} Log level name
+     */
+    function getLogLevelName(level) {
+        for (const [name, value] of Object.entries(LOG_LEVELS)) {
+            if (value === level) {
+                return name;
+            }
+        }
+        return 'UNKNOWN';
+    }
+    
+    return {
+        init
+    };
+})();
     
     // Log storage
     const logs = {
