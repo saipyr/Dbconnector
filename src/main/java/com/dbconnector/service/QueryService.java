@@ -182,13 +182,17 @@ public class QueryService {
             currentRow++;
         }
         
+        // Check if there are more rows without consuming the result set
+        boolean hasMore = rs.next();
+        
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
         result.put("columns", columns);
         result.put("data", data);
         result.put("currentPage", page);
         result.put("pageSize", pageSize);
-        result.put("hasMore", rs.next()); // Check if there are more rows
+        result.put("hasMore", hasMore);
+        result.put("totalRows", currentRow); // Add total rows count
         
         return result;
     }

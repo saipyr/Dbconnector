@@ -1,5 +1,6 @@
 package com.dbconnector.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
@@ -21,6 +22,9 @@ public class ConnectionService {
         activeConnections.put(connectionId, connection);
     }
     
+    @Autowired
+    private LoggingService loggingService;
+    
     public void removeConnection(String connectionId) {
         Connection connection = activeConnections.remove(connectionId);
         if (connection != null) {
@@ -28,7 +32,7 @@ public class ConnectionService {
                 connection.close();
             } catch (SQLException e) {
                 // Log error but don't throw
-                e.printStackTrace();
+                loggingService.logError("Error closing connection: " + connectionId, e);
             }
         }
     }
