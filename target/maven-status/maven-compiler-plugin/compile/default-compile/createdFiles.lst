@@ -10,12 +10,14 @@ com/dbconnector/service/MultiCloudManagementService.class
 com/dbconnector/service/SSLCertificateService.class
 com/dbconnector/config/MetricsConfig.class
 com/dbconnector/service/CloudServiceDiscoveryService.class
+com/dbconnector/service/CredentialService.class
 com/dbconnector/service/CustomDriverService.class
 com/dbconnector/service/CloudConnectionService.class
 com/dbconnector/controller/CloudManagementController.class
 com/dbconnector/controller/SchemaController.class
 com/dbconnector/service/DataService.class
 com/dbconnector/service/SSLCertificateService$CertificateInfo.class
+com/dbconnector/controller/DBConnectorController.class
 com/dbconnector/service/EnhancedConnectionPoolService.class
 com/dbconnector/service/CloudAuthenticationService.class
 com/dbconnector/service/QueryService.class
@@ -26,6 +28,7 @@ com/dbconnector/controller/DataController.class
 com/dbconnector/DbConnectorApplication.class
 com/dbconnector/controller/QueryController.class
 com/dbconnector/DatabaseViewer.class
+com/dbconnector/service/QueryStorageService.class
 com/dbconnector/QueryPanel.class
 com/dbconnector/controller/ConnectionController.class
 com/dbconnector/service/ConnectionService.class
